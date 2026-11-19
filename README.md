@@ -80,18 +80,22 @@ After a page is served, prefetch starts one goroutine per same-site `href` or `h
 
 Generated pages are cached on first render. Records are not. A control that changes data targets `/state/...` and swaps one element. The page cache stays as it was.
 
-| Request | Op |
-| --- | --- |
-| `GET /state/items` | list |
-| `GET /state/items/{id}` | read |
-| `POST /state/items` | create |
-| `PUT` or `PATCH /state/items/{id}` | update |
-| `DELETE /state/items/{id}` | delete |
-| `GET /state/rounds/draw/vowel` | action |
+The server has no built-in resources. A generated page invents the path, and `ParseStatePath` only counts the segments.
 
-`Apply` mutates `session.records` first, then asks Haiku for one element whose id is `HX-Target`, or the resource name when that header is empty. The prompt includes the operation, the records after the change, the HTMX headers, and the cached page for the `Referer` path. The reply is scrubbed. `hx-trigger="load"` and `hx-trigger="every ..."` are removed, so a swapped element does not request itself.
+| Shape | Example a page might emit | What the handler does |
+| --- | --- | --- |
+| `GET /state/{resource}` | `GET /state/items` | list |
+| `GET /state/{resource}/{id}` | `GET /state/items/abc` | read `abc` |
+| `GET /state/{resource}/{action...}` | `GET /state/rounds/draw/vowel` | store the action `draw/vowel` on `rounds` |
+| `POST /state/{resource}` | `POST /state/items` | create |
+| `PUT` or `PATCH /state/{resource}/{id}` | `PUT /state/items/abc` | update `abc` |
+| `DELETE /state/{resource}/{id}` | `DELETE /state/items/abc` | delete `abc` |
 
-The copy sent to the browser is not the stored page. `armStateRefresh` adds `hx-trigger="load"` to a region that reads itself: an `hx-get` of a list or a record, an `hx-target` of `this` or its own id, and not a button or an action. Navigating back therefore hits `/state` again. The stored HTML does not carry that trigger.
+`rounds/draw/vowel` is the test fixture for that third shape. Two or more segments after the resource, on `GET`, are an action string. The handler does not know what a round or a vowel is. It appends a record that carries that string, then asks Haiku to rewrite the target element from the records.
+
+`Apply` does the mutation first, then asks for one element whose id is `HX-Target`, or the resource name when that header is empty. The prompt includes the operation, the records after the change, the HTMX headers, and the cached page for the `Referer` path. The reply is scrubbed. `hx-trigger="load"` and `hx-trigger="every ..."` are removed, so a swapped element does not request itself.
+
+The copy sent to the browser is not the stored page. `armStateRefresh` adds `hx-trigger="load"` to a region that reads itself: an `hx-get` of a list or a single record, with `hx-target` of `this` or its own id. A button, and a `GET` that carries an action path, are left alone, so showing the page does not fire them. Navigating back therefore hits `/state` again. The stored HTML does not carry that trigger.
 
 ## Where it lives
 
