@@ -1,0 +1,157 @@
+@import 'tailwindcss';
+@plugin "@tailwindcss/typography";
+@plugin "daisyui" {
+  themes: light --default, dark --prefersdark, nord, cupcake, dracula, luxury, lemonade, sunset, aqua, forest, dim, retro;
+}
+@source "../*.templ";
+@source not "../../site";
+@source inline("flex inline-flex grid block inline-block hidden contents shrink-0 grow");
+@source inline("{sm:,md:,lg:,}{flex-col,flex-row,flex-wrap,items-start,items-center,items-end,items-stretch,justify-start,justify-center,justify-between,justify-end,justify-around}");
+@source inline("{sm:,md:,lg:,}grid-cols-{1,2,3,4,5,6,7,8,9,10,12}");
+@source inline("{sm:,md:,lg:,}col-span-{1,2,3,4,5,6,7,8,9,10,11,12,full}");
+@source inline("{sm:,md:,lg:,}{gap,gap-x,gap-y,p,px,py,pt,pb,pl,pr,m,mt,mb,ml,mr,mx,my,space-x,space-y}-{0,0.5,1,1.5,2,3,4,5,6,8,10,12,16,20,24}");
+@source inline("mx-auto min-h-dvh min-h-screen h-full h-screen w-full w-fit w-8 w-10 w-12 h-8 h-10 h-12 min-w-0 max-w-none max-w-xs max-w-sm max-w-md max-w-lg max-w-xl max-w-2xl max-w-3xl max-w-4xl max-w-5xl max-w-6xl max-w-7xl max-w-full max-w-prose aspect-square place-items-center");
+@source inline("{sm:,md:,lg:,}text-{xs,sm,base,lg,xl,2xl,3xl,4xl,5xl,6xl,7xl,8xl,left,center,right}");
+@source inline("font-sans font-serif font-mono font-normal font-medium font-semibold font-bold uppercase lowercase tracking-tight tracking-normal tracking-wide leading-none leading-tight leading-snug leading-normal leading-relaxed tabular-nums");
+@source inline("bg-base-100 bg-base-200 bg-base-300 bg-primary bg-secondary bg-accent bg-neutral bg-transparent text-base-content text-primary text-primary-content text-secondary text-secondary-content text-accent text-accent-content text-neutral text-neutral-content");
+@source inline("border border-base-200 border-base-300 border-primary rounded-none rounded-sm rounded-md rounded-lg rounded-xl rounded-box rounded-full shadow-none shadow-sm shadow-md shadow-lg shadow-xl");
+@source inline("relative absolute sticky top-0 inset-0 inset-x-0 overflow-hidden overflow-x-auto overflow-y-auto z-10");
+@source inline("prose prose-sm prose-lg prose-xl divide-y divide-base-300 list-disc list-decimal text-balance text-pretty");
+@source inline("btn btn-primary btn-secondary btn-accent btn-neutral btn-ghost btn-outline btn-link btn-sm btn-md btn-lg btn-wide btn-block btn-square navbar navbar-start navbar-center navbar-end menu menu-sm menu-md menu-lg menu-horizontal menu-vertical hero hero-content hero-overlay footer footer-center footer-horizontal footer-title stats stat stat-title stat-value stat-desc table table-zebra table-pin-rows badge badge-primary badge-secondary badge-accent badge-outline badge-ghost badge-lg alert alert-info alert-success alert-warning alert-error timeline timeline-start timeline-middle timeline-end timeline-box steps step step-primary breadcrumbs tabs tabs-border tabs-box tabs-lift tab tab-active divider stack join join-item kbd card card-body card-title card-actions card-border card-side link link-hover fieldset label input input-bordered select select-bordered textarea textarea-bordered checkbox radio toggle collapse collapse-title collapse-content collapse-arrow indicator dropdown dropdown-content mockup-window mockup-browser artboard");
+
+/* Generated markup cannot add a stylesheet. Keep the document inside the device width. */
+@layer base {
+  html {
+    overflow-x: clip;
+  }
+  body {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
+    height: auto;
+  }
+  /* Tailwind v4 no longer sets pointer on buttons, and clickable divs never had it. */
+  a[href],
+  button:not(:disabled),
+  summary,
+  label,
+  select,
+  input:where([type="button"], [type="reset"], [type="submit"], [type="checkbox"], [type="radio"]):not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [hx-get],
+  [hx-post],
+  [hx-put],
+  [hx-patch],
+  [hx-delete] {
+    cursor: pointer;
+  }
+}
+
+/* Unlayered so these beat Tailwind utilities. A side-by-side flex shell plus overflow-x:clip parks the workspace past the screen. */
+@media (max-width: 47.99rem) {
+  #shell .flex:not(.navbar):not(.menu):not(.join):not(.tabs):not(.breadcrumbs) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  #shell .stats {
+    grid-auto-flow: row;
+  }
+}
+#shell .flex,
+#shell .grid,
+#shell .menu,
+#shell .menu-horizontal,
+#shell .stats,
+#shell .navbar,
+#shell .tabs,
+#shell .table,
+#shell .overflow-x-auto {
+  max-width: 100%;
+  min-width: 0;
+}
+#shell .menu :where(a, button, span, li ul, li menu) {
+  white-space: normal;
+}
+#shell .h-screen,
+#shell .overflow-hidden.h-screen,
+#shell .min-h-screen.overflow-hidden {
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
+}
+
+#loading.htmx-request { opacity: 1; }
+
+#slopify-loading,
+.boot-track {
+  pointer-events: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 10px;
+  z-index: 2147483647;
+  overflow: hidden;
+  background: #141414;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35), 0 8px 18px rgba(0, 0, 0, 0.45);
+}
+
+#slopify-loading {
+  opacity: 0;
+}
+
+#slopify-loading::before,
+.boot-bar {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 42%;
+  background: linear-gradient(90deg, transparent, #ffe14a 20%, #ff3b00 50%, #ffe14a 80%, transparent);
+  box-shadow: 0 0 18px #ff4d00;
+  transform: translateX(-120%);
+}
+
+#slopify-loading.htmx-request {
+  opacity: 1 !important;
+}
+
+#slopify-loading.htmx-request::before,
+.boot-bar {
+  animation: boot-slide 0.85s ease-in-out infinite;
+}
+
+.boot-retry {
+  display: none;
+}
+
+.boot-failed .boot-bar {
+  animation: none;
+  width: 100%;
+  opacity: 0.35;
+}
+
+.boot-failed .boot-retry {
+  display: inline-block;
+}
+
+@keyframes boot-slide {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(320%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #slopify-loading.htmx-request::before,
+  .boot-bar {
+    animation: none;
+    width: 100%;
+    transform: none;
+    opacity: 1;
+  }
+}

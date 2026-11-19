@@ -1,0 +1,191 @@
+package template
+
+import "github.com/DillonEnge/slopify/internal/site"
+
+templ Document(s site.Site, p site.Page) {
+	<!doctype html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ windowTitle(s, p) }</title>
+			<link href="/static/output.css" rel="stylesheet"/>
+			<script src="https://unpkg.com/htmx.org@2.0.2"></script>
+		</head>
+		<body>
+			@frame(s, p)
+		</body>
+	</html>
+}
+
+templ frame(s site.Site, p site.Page) {
+	<div
+		id="shell"
+		style="display:contents"
+		hx-history="false"
+		hx-boost="true"
+		hx-target="#page"
+		hx-select="#page"
+		hx-swap="outerHTML show:window:top"
+		hx-indicator="#slopify-loading"
+	>
+		<div id="slopify-loading"></div>
+		@templ.Raw(s.Compose(p.HTML))
+		<script>
+			(function () {
+				document.body.removeAttribute("class")
+				document.body.removeAttribute("style")
+			})()
+		</script>
+	</div>
+}
+
+templ Boot(path string) {
+	<!doctype html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Queued · Slopify</title>
+			<link href="/static/output.css" rel="stylesheet"/>
+			<script src="https://unpkg.com/htmx.org@2.0.2"></script>
+		</head>
+		<body class="min-h-dvh bg-base-200 text-base-content">
+			<div
+				id="boot"
+				class="flex min-h-dvh items-center justify-center px-6"
+				hx-get={ path }
+				hx-trigger="load"
+				hx-target="this"
+				hx-swap="outerHTML"
+				hx-on:htmx:responseError="bootFailed(this)"
+				hx-on:htmx:sendError="bootFailed(this)"
+				data-queue-slot={ queueSlotLabel(path) }
+				aria-busy="true"
+			>
+				<div class="w-full max-w-md font-mono">
+					<p class="text-xs font-medium uppercase tracking-wide text-base-content/50">Slopify edge proxy</p>
+					<h1 class="mt-3 text-2xl font-semibold tracking-tight">You are in the waiting queue</h1>
+					<p class="mt-3"><span class="badge badge-outline">High load</span></p>
+					<p data-boot-status class="mt-4 text-sm leading-relaxed text-base-content/80" role="status">The edge proxy is holding this request. Upstream generation slots are full.</p>
+					<dl class="mt-5 divide-y divide-base-300 border border-base-300 text-sm">
+						<div class="flex justify-between gap-4 px-3 py-2">
+							<dt class="text-base-content/50">REQUEST</dt>
+							<dd>GET { path }</dd>
+						</div>
+						<div class="flex justify-between gap-4 px-3 py-2">
+							<dt class="text-base-content/50">POSITION</dt>
+							<dd data-queue-pos class="tabular-nums">{ queuePosLabel(path) }</dd>
+						</div>
+						<div class="flex justify-between gap-4 px-3 py-2">
+							<dt class="text-base-content/50">AHEAD</dt>
+							<dd data-queue-ahead class="tabular-nums">{ queueAhead(path) }</dd>
+						</div>
+						<div class="flex justify-between gap-4 px-3 py-2">
+							<dt class="text-base-content/50">HOLD</dt>
+							<dd data-queue-hold class="tabular-nums">{ queueHold(path) }</dd>
+						</div>
+						<div class="flex justify-between gap-4 px-3 py-2">
+							<dt class="text-base-content/50">NODE</dt>
+							<dd data-queue-node>{ queueNode(path) }</dd>
+						</div>
+						<div class="flex justify-between gap-4 px-3 py-2">
+							<dt class="text-base-content/50">STATE</dt>
+							<dd data-queue-state>HOLDING</dd>
+						</div>
+					</dl>
+					<p class="mt-4 text-xs leading-relaxed text-base-content/60">Keep this tab open. A refresh sends this request to the back of the queue.</p>
+					<div class="boot-track" aria-hidden="true"><span class="boot-bar"></span></div>
+					<a href={ templ.SafeURL(path) } class="boot-retry mt-6 text-sm underline decoration-base-content/30 underline-offset-4">Rejoin the queue</a>
+				</div>
+			</div>
+			<noscript>
+				<p class="px-6 py-4 text-sm">JavaScript is required to hold your place in the queue.</p>
+			</noscript>
+			<script>
+				function bootFailed(el) {
+					el.setAttribute("aria-busy", "false")
+					el.classList.add("boot-failed")
+					var status = el.querySelector("[data-boot-status]")
+					if (status) status.textContent = "The proxy dropped this request. Your place in the queue is gone."
+					var state = el.querySelector("[data-queue-state]")
+					if (state) state.textContent = "DROPPED"
+				}
+				(function () {
+					var root = document.getElementById("boot")
+					if (!root) return
+					var posEl = root.querySelector("[data-queue-pos]")
+					var aheadEl = root.querySelector("[data-queue-ahead]")
+					var holdEl = root.querySelector("[data-queue-hold]")
+					var stateEl = root.querySelector("[data-queue-state]")
+					var status = root.querySelector("[data-boot-status]")
+					var pos = parseInt(posEl && posEl.textContent, 10)
+					if (!pos) pos = 8
+					var slot = parseInt(root.getAttribute("data-queue-slot"), 10)
+					if (!slot) slot = 4
+					var hold = pos * slot
+					if (holdEl) {
+						var parts = (holdEl.textContent || "").split(":")
+						if (parts.length === 2) hold = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10)
+					}
+					if (!hold) hold = pos * slot
+					var lines = [
+						"The edge proxy is holding this request. Upstream generation slots are full.",
+						"No free slot on the origin. Your place in the queue is reserved.",
+						"Capacity check failed. The proxy is still holding the connection.",
+						"High load. Keep this tab open. A refresh sends you to the back of the queue.",
+						"The edge is retrying the upstream. The queue did not move you back."
+					]
+					var line = 0
+					var tick = 0
+					function pad(n) {
+						return (n < 10 ? "0" : "") + n
+					}
+					function render() {
+						if (posEl) posEl.textContent = String(pos)
+						if (aheadEl) aheadEl.textContent = String(Math.max(pos - 1, 0))
+						if (holdEl) holdEl.textContent = pad(Math.floor(hold / 60)) + ":" + pad(hold % 60)
+						if (stateEl && !root.classList.contains("boot-failed")) stateEl.textContent = pos > 1 ? "HOLDING" : "SERVING"
+						if (status && !root.classList.contains("boot-failed")) status.textContent = lines[line % lines.length]
+					}
+					render()
+					var timer = setInterval(function () {
+						if (!root.isConnected || root.classList.contains("boot-failed")) {
+							clearInterval(timer)
+							return
+						}
+						tick++
+						if (hold > 3) hold -= 1
+						if (pos > 1 && hold <= (pos - 1) * slot) pos -= 1
+						if (tick % 4 === 0) line++
+						render()
+					}, 1000)
+				})()
+			</script>
+		</body>
+	</html>
+}
+
+templ Fragment(s site.Site, p site.Page) {
+	<title>{ windowTitle(s, p) }</title>
+	@templ.Raw(p.HTML)
+}
+
+templ Unavailable(message string) {
+	<!doctype html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Unavailable</title>
+			<link href="/static/output.css" rel="stylesheet"/>
+		</head>
+		<body class="min-h-dvh bg-base-200 text-base-content">
+			<main class="mx-auto flex min-h-dvh w-full max-w-xl flex-col justify-center gap-4 px-6">
+				<h1 class="text-3xl font-semibold tracking-tight">The site didn't come back</h1>
+				<p class="text-base-content/80">{ message }</p>
+				<a href="/" class="underline underline-offset-4">Try again</a>
+			</main>
+		</body>
+	</html>
+}
